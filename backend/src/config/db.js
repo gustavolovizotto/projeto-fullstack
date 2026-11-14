@@ -12,3 +12,20 @@ types.setTypeParser(20, (valor) => Number(valor));
 types.setTypeParser(1082, (valor) => valor);
 
 export const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+
+// Roda fn dentro de uma transação: ou tudo é gravado, ou nada.
+// fn recebe o client da transação, que deve ser repassado aos models.
+export async function transacao(fn) {
+  const cliente = await pool.connect();
+  try {
+    await cliente.query('BEGIN');
+    const resultado = await fn(cliente);
+    await cliente.query('COMMIT');
+    return resultado;
+  } catch (erro) {
+    await cliente.query('ROLLBACK');
+    throw erro;
+  } finally {
+    cliente.release();
+  }
+}
