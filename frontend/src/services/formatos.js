@@ -47,13 +47,38 @@ export function hojeISO() {
   return `${hoje.getFullYear()}-${doisDigitos(hoje.getMonth() + 1)}-${doisDigitos(hoje.getDate())}`
 }
 
-// Primeiro e último dia do mês atual: o período padrão das telas.
-export function mesAtual() {
+// Primeiro e último dia de um mês relativo ao atual (0 = este, -1 = anterior).
+export function mesRelativo(deslocamento) {
   const hoje = new Date()
-  const ano = hoje.getFullYear()
-  const mes = hoje.getMonth() + 1
+  const referencia = new Date(hoje.getFullYear(), hoje.getMonth() + deslocamento, 1)
+  const ano = referencia.getFullYear()
+  const mes = referencia.getMonth() + 1
   const ultimoDia = new Date(ano, mes, 0).getDate()
   return { inicio: `${ano}-${doisDigitos(mes)}-01`, fim: `${ano}-${doisDigitos(mes)}-${ultimoDia}` }
+}
+
+// O período padrão das telas.
+export function mesAtual() {
+  return mesRelativo(0)
+}
+
+const formatadorMoedaCurta = new Intl.NumberFormat('pt-BR', {
+  style: 'currency',
+  currency: 'BRL',
+  notation: 'compact',
+  maximumFractionDigits: 1,
+})
+
+// Para eixos de gráfico: 1500 → 'R$ 1,5 mil'.
+export function moedaCurta(valor) {
+  return formatadorMoedaCurta.format(valor)
+}
+
+const formatadorPercentual = new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 2 })
+
+// 7.84 → '7,84%'
+export function percentual(valor) {
+  return `${formatadorPercentual.format(valor)}%`
 }
 
 // '2026-11-01' → '01/11/2026'. Quebra a string em vez de usar new Date(),
