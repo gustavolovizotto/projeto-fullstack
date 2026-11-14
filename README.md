@@ -129,6 +129,7 @@ cd backend && npm test
 | GET | `/api/relatorios/categorias?inicio=&fim=` | Saídas e entradas por categoria, com percentual e comparação com o período anterior | 200, 400 |
 | GET | `/api/relatorios/fontes-destinos?inicio=&fim=` | Entradas por fonte, saídas por destino e saldo de cada conta no período | 200, 400 |
 | GET | `/api/relatorios/faturas?meses=3` | Fatura aberta e as próximas N de cada cartão, com limite utilizado e disponível | 200, 400 |
+| GET | `/api/saude-financeira` | Indicadores, projeção de saldo e dicas (desafio) | 200 |
 
 Todas as rotas abaixo de `/api`, exceto `health`, `cadastro` e `login`, exigem o cabeçalho `Authorization: Bearer <token>`. Token ausente, inválido ou expirado → 401.
 
@@ -146,6 +147,32 @@ Toda resposta de erro tem o mesmo formato:
 ```
 
 `campos` só aparece quando o erro é de um campo específico.
+
+## Saúde financeira (desafio)
+
+Tudo é calculado no back-end, em `backend/src/models/saudeFinanceira.js` (função pura, testada em `saudeFinanceira.test.js`). As dicas são geradas por regras, sem modelo de linguagem.
+
+| Indicador | Como é calculado |
+|---|---|
+| Taxa de poupança | (entradas − saídas) ÷ entradas, mês a mês e no total da janela (mês atual até hoje + 2 meses anteriores) |
+| Comprometimento com cartões | soma das 3 próximas faturas de todos os cartões ÷ 3 meses de renda média |
+| Parcelas futuras | soma das parcelas de compras parceladas que ainda vão vencer, por mês |
+| Categoria fora da curva | gasto do mês atual na categoria × média dos 3 meses anteriores |
+| Projeção de saldo | para os próximos 6 meses: renda média − saídas à vista médias − parcelas já conhecidas daquele mês, acumulado |
+
+Meses sem nenhum lançamento (antes de o usuário começar a usar o app) ficam fora das médias.
+
+Limites usados nas dicas (constante `LIMITES`):
+
+| Regra | Limite |
+|---|---|
+| Alerta de poupança baixa | menos de 10% da renda |
+| Elogio de poupança | 20% da renda ou mais |
+| Alerta de comprometimento com cartões | mais de 30% da renda |
+| Alerta de categoria fora da curva | mais de 20% acima da média |
+| Alerta de saldo projetado | saldo acumulado negativo em algum dos 6 meses |
+
+A página avisa, em texto visível, que as informações são educativas e não constituem recomendação financeira profissional.
 
 ## Decisões do projeto
 
