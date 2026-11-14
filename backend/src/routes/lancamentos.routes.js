@@ -6,6 +6,8 @@ import { cabeEmParcelas } from '../models/parcelas.js';
 import { ErroHttp } from '../middlewares/erros.js';
 import { validarId } from '../middlewares/validarId.js';
 import { validarLancamento } from '../middlewares/validarLancamento.js';
+import { validarPeriodo } from '../middlewares/validarPeriodo.js';
+import { validarFiltrosLancamentos } from '../middlewares/validarFiltrosLancamentos.js';
 
 // Montado em /api/lancamentos, depois do middleware autenticar.
 const router = Router();
@@ -39,6 +41,12 @@ async function conferirReferencias(usuarioId, { tipo, categoriaId, fonteDestinoI
     });
   }
 }
+
+// ?inicio=&fim= (padrão: mês corrente) &tipo=&categoriaId=&fonteDestinoId=&pagina=&porPagina=
+router.get('/', validarPeriodo, validarFiltrosLancamentos, async (req, res) => {
+  const resultado = await Lancamento.listar(req.usuarioId, req.periodo, req.filtros);
+  res.json({ periodo: req.periodo, ...resultado });
+});
 
 router.post('/', validarLancamento, async (req, res) => {
   await conferirReferencias(req.usuarioId, req.body, req.body.totalParcelas);

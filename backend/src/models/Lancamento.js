@@ -11,6 +11,62 @@ const COLUNAS = `id, tipo, descricao, valor, data,
 // Leituras e alterações passam pela view lancamentos_ativos (sem os
 // excluídos) e sempre filtram por usuario_id, que vem do token.
 
+// Listagem paginada com filtros opcionais, mais os totais do período filtrado
+// (somados no banco, sobre todos os lançamentos do filtro, não só a página).
+export async function listar(usuarioId, { inicio, fim }, filtros) {
+  const condicoes = ['l.usuario_id = $1', 'l.data BETWEEN $2 AND $3'];
+  const parametros = [usuarioId, inicio, fim];
+  // Cada filtro informado vira mais um "AND coluna = $n", sempre parametrizado.
+  for (const [coluna, valor] of [
+    ['l.tipo', filtros.tipo],
+    ['l.categoria_id', filtros.categoriaId],
+    ['l.fonte_destino_id', filtros.fonteDestinoId],
+  ]) {
+    if (valor !== null) {
+      parametros.push(valor);
+      condicoes.push(`${coluna} = $${parametros.length}`);
+    }
+  }
+  const where = condicoes.join(' AND ');
+
+  const { rows: [totais] } = await pool.query(
+    `SELECT COUNT(*) AS "totalItens",
+       COALESCE(SUM(valor) FILTER (WHERE tipo = 'entrada'), 0) AS entradas,
+       COALESCE(SUM(valor) FILTER (WHERE tipo = 'saida'), 0) AS saidas,
+       COALESCE(SUM(CASE WHEN tipo = 'entrada' THEN valor ELSE -valor END), 0) AS saldo
+     FROM lancamentos_ativos l
+     WHERE ${where}`,
+    parametros,
+  );
+
+  const offset = (filtros.pagina - 1) * filtros.porPagina;
+  const { rows: itens } = await pool.query(
+    `SELECT l.id, l.tipo, l.descricao, l.valor, l.data,
+       l.categoria_id AS "categoriaId", c.nome AS "categoriaNome",
+       l.fonte_destino_id AS "fonteDestinoId", f.nome AS "fonteDestinoNome",
+       f.tipo AS "fonteDestinoTipo",
+       l.parcela_atual AS "parcelaAtual", l.total_parcelas AS "totalParcelas",
+       l.grupo_parcelamento AS "grupoParcelamento"
+     FROM lancamentos_ativos l
+     JOIN categorias c ON c.id = l.categoria_id
+     JOIN fontes_destinos f ON f.id = l.fonte_destino_id
+     WHERE ${where}
+     ORDER BY l.data DESC, l.id DESC
+     LIMIT $${parametros.length + 1} OFFSET $${parametros.length + 2}`,
+    [...parametros, filtros.porPagina, offset],
+  );
+
+  const { totalItens, ...valores } = totais;
+  return {
+    itens,
+    pagina: filtros.pagina,
+    porPagina: filtros.porPagina,
+    totalItens,
+    totalPaginas: Math.max(1, Math.ceil(totalItens / filtros.porPagina)),
+    totais: valores,
+  };
+}
+
 // Cria o lançamento. Com totalParcelas > 1, grava uma linha por parcela, todas
 // com a data da compra e o mesmo grupo_parcelamento, numa transação: ou todas
 // as parcelas são gravadas, ou nenhuma. Devolve a lista criada.
