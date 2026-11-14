@@ -46,4 +46,36 @@ router.get('/categorias', validarPeriodo, async (req, res) => {
   });
 });
 
+const somar = (itens, campo) =>
+  itens.reduce((soma, item) => soma + paraCentavos(item[campo]), 0) / 100;
+
+// RF8: ?inicio=&fim= (padrão: mês corrente)
+router.get('/fontes-destinos', validarPeriodo, async (req, res) => {
+  const linhas = await Relatorio.porFonteDestino(req.usuarioId, req.periodo);
+  const maiorPrimeiro = (campo) => (a, b) => b[campo] - a[campo];
+
+  // Quanto veio de cada fonte e quanto saiu por cada destino (só os que
+  // tiveram movimento), e o saldo de cada conta no período.
+  const fontes = linhas
+    .filter((l) => l.entradas > 0)
+    .map(({ id, nome, tipo, entradas }) => ({ id, nome, tipo, total: entradas }))
+    .sort(maiorPrimeiro('total'));
+  const destinos = linhas
+    .filter((l) => l.saidas > 0)
+    .map(({ id, nome, tipo, saidas }) => ({ id, nome, tipo, total: saidas }))
+    .sort(maiorPrimeiro('total'));
+  const contas = linhas
+    .filter((l) => l.tipo === 'conta')
+    .map(({ id, nome, entradas, saidas, saldo }) => ({ id, nome, entradas, saidas, saldo }));
+
+  res.json({
+    periodo: req.periodo,
+    totalEntradas: somar(fontes, 'total'),
+    totalSaidas: somar(destinos, 'total'),
+    fontes,
+    destinos,
+    contas,
+  });
+});
+
 export default router;

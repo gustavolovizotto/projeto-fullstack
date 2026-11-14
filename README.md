@@ -127,6 +127,7 @@ cd backend && npm test
 | PUT | `/api/lancamentos/:id?todasParcelas=` | Edita o lançamento, uma parcela ou todas as parcelas da compra | 200, 400, 404 |
 | DELETE | `/api/lancamentos/:id?todasParcelas=` | Exclui o lançamento, uma parcela ou todas (soft-delete) | 204, 404 |
 | GET | `/api/relatorios/categorias?inicio=&fim=` | Saídas e entradas por categoria, com percentual e comparação com o período anterior | 200, 400 |
+| GET | `/api/relatorios/fontes-destinos?inicio=&fim=` | Entradas por fonte, saídas por destino e saldo de cada conta no período | 200, 400 |
 
 Todas as rotas abaixo de `/api`, exceto `health`, `cadastro` e `login`, exigem o cabeçalho `Authorization: Bearer <token>`. Token ausente, inválido ou expirado → 401.
 
