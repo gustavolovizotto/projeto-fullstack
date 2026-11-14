@@ -54,6 +54,13 @@ export function periodoAnterior({ inicio, fim }) {
   return { inicio: somarDias(inicio, -dias), fim: somarDias(inicio, -1) };
 }
 
+// Mês de referência 'AAAA-MM' somado de n meses (n pode ser negativo).
+export function somarMeses(referencia, meses) {
+  const [ano, mes] = referencia.split('-').map(Number);
+  const data = new Date(Date.UTC(ano, mes - 1 + meses, 1));
+  return `${data.getUTCFullYear()}-${doisDigitos(data.getUTCMonth() + 1)}`;
+}
+
 // Primeiro e último dia do mês da data informada (padrão: hoje).
 export function mesDe(dataISO = hojeISO()) {
   const [ano, mes] = dataISO.split('-').map(Number);
