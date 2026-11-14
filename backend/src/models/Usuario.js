@@ -24,6 +24,15 @@ export async function cadastrar({ nome, email, cpf, senhaHash }) {
   });
 }
 
+// Único lugar que lê senha_hash, e só para o login comparar com o bcrypt.
+export async function buscarComSenhaPorEmail(email) {
+  const { rows } = await pool.query(
+    `SELECT ${COLUNAS_PUBLICAS}, senha_hash FROM usuarios WHERE email = $1`,
+    [email],
+  );
+  return rows[0];
+}
+
 export async function buscarPorId(id) {
   const { rows } = await pool.query(
     `SELECT ${COLUNAS_PUBLICAS} FROM usuarios WHERE id = $1`,
