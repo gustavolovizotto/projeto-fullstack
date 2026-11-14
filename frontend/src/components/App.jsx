@@ -2,13 +2,14 @@ import { Navigate, Route, Routes } from 'react-router-dom'
 import Layout from './Layout.jsx'
 import RotaProtegida from './RotaProtegida.jsx'
 import Login from './Login.jsx'
+import Cadastro from './Cadastro.jsx'
 import EmConstrucao from './EmConstrucao.jsx'
 
 export default function App() {
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
-      <Route path="/cadastro" element={<EmConstrucao titulo="Criar conta" />} />
+      <Route path="/cadastro" element={<Cadastro />} />
 
       <Route element={<RotaProtegida />}>
         <Route element={<Layout />}>
