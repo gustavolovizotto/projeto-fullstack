@@ -103,6 +103,7 @@ cd backend && npm test
 | POST | `/api/fontes-destinos` | Cria fonte/destino (`nome`, `tipo`; cartão exige `diaFechamento`, `diaVencimento`, `limite`) | 201, 400, 409 |
 | PUT | `/api/fontes-destinos/:id` | Edita fonte/destino | 200, 400, 404, 409 |
 | DELETE | `/api/fontes-destinos/:id` | Exclui fonte/destino (soft-delete) | 204, 404, 409 |
+| GET | `/api/lancamentos?inicio=&fim=&tipo=&categoriaId=&fonteDestinoId=&pagina=&porPagina=` | Lista com filtros (padrão: mês corrente) e paginação; traz os totais de entradas, saídas e saldo do período filtrado | 200, 400 |
 | POST | `/api/lancamentos` | Cria lançamento (`tipo`, `descricao`, `valor`, `data`, `categoriaId`, `fonteDestinoId`, `totalParcelas?`); devolve a lista de parcelas criadas | 201, 400, 404 |
 | GET | `/api/lancamentos/:id` | Detalha um lançamento (numa parcela, inclui `grupo.valorTotal`) | 200, 404 |
 | PUT | `/api/lancamentos/:id?todasParcelas=` | Edita o lançamento, uma parcela ou todas as parcelas da compra | 200, 400, 404 |
