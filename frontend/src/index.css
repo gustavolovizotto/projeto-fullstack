@@ -316,3 +316,8 @@ section > .alerta {
 .estado-erro p {
   margin: 0;
 }
+
+.detalhe {
+  display: block;
+  font-size: 0.82rem;
+}
