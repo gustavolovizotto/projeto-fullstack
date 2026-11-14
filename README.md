@@ -61,9 +61,27 @@ docker run -d --name financas-db -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=fi
 cd backend
 cp .env.example .env    # depois ajuste DATABASE_URL com seu usuário e senha
 npm install
-npm run db:criar        # cria as tabelas (apaga os dados se já existirem)
+npm run db:reset        # cria as tabelas e carrega os dados de demonstração
 npm run dev
 ```
+
+Scripts do banco:
+
+| Script | O que faz |
+|---|---|
+| `npm run db:criar` | Recria as tabelas a partir de `database/schema.sql` (apaga os dados) |
+| `npm run db:seed` | Carrega os dados de demonstração num banco vazio |
+| `npm run db:reset` | `db:criar` + `db:seed` |
+
+### Dados de demonstração
+O seed cria dois usuários com o mês atual e os dois anteriores de lançamentos, cartões e compras parceladas (incluindo uma compra feita no dia do fechamento do cartão):
+
+| Usuário | E-mail | Senha |
+|---|---|---|
+| Ana Souza | `ana@exemplo.com` | `Senha123` |
+| Bruno Lima | `bruno@exemplo.com` | `Senha123` |
+
+As datas são relativas ao dia em que o seed roda, então a demonstração sempre tem dados recentes.
 
 A API sobe em `http://localhost:3000`. Para conferir: `curl http://localhost:3000/api/health`.
 
