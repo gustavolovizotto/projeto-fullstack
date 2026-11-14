@@ -99,6 +99,10 @@ cd backend && npm test
 | POST | `/api/categorias` | Cria categoria (`nome`, `tipo`) | 201, 400, 409 |
 | PUT | `/api/categorias/:id` | Edita categoria | 200, 400, 404, 409 |
 | DELETE | `/api/categorias/:id` | Exclui categoria (soft-delete) | 204, 404, 409 |
+| GET | `/api/fontes-destinos?tipo=` | Lista fontes/destinos (filtro opcional `renda`/`conta`/`cartao_credito`) | 200, 400 |
+| POST | `/api/fontes-destinos` | Cria fonte/destino (`nome`, `tipo`; cartão exige `diaFechamento`, `diaVencimento`, `limite`) | 201, 400, 409 |
+| PUT | `/api/fontes-destinos/:id` | Edita fonte/destino | 200, 400, 404, 409 |
+| DELETE | `/api/fontes-destinos/:id` | Exclui fonte/destino (soft-delete) | 204, 404, 409 |
 
 Todas as rotas abaixo de `/api`, exceto `health`, `cadastro` e `login`, exigem o cabeçalho `Authorization: Bearer <token>`. Token ausente, inválido ou expirado → 401.
 
@@ -128,7 +132,7 @@ Toda resposta de erro tem o mesmo formato:
 - **Login:** o token JWT vale `JWT_EXPIRES_IN` (padrão 1h). E-mail inexistente e senha errada recebem a mesma resposta e levam o mesmo tempo (o bcrypt compara com um hash falso), para não revelar quais e-mails estão cadastrados. Depois de 5 tentativas com falha em 15 minutos, o IP recebe 429.
 - **Utilitários puros** (`cpfValido`, validações de e-mail e senha) ficam em `backend/src/models/validacao.js`, junto com o teste deles.
 - **Soft-delete:** categorias, fontes/destinos e lançamentos não são apagados de verdade. A exclusão preenche `excluido_em`, e a API só lê e altera pelas views `categorias_ativas`, `fontes_destinos_ativas` e `lancamentos_ativos`. Assim nenhuma consulta precisa lembrar de filtrar os excluídos.
-- **Exclusão de categoria com lançamentos:** continua recusada com 409, como pede o enunciado. Como o soft-delete não apaga linhas, a chave estrangeira não bloqueia mais nada; quem bloqueia é o próprio `UPDATE`, que só marca como excluída se não existir lançamento ativo usando a categoria. Pelo mesmo motivo, não dá para trocar o tipo (entrada/saída) de uma categoria que tem lançamentos.
+- **Exclusão de categoria ou fonte/destino com lançamentos:** continua recusada com 409, como pede o enunciado. Como o soft-delete não apaga linhas, a chave estrangeira não bloqueia mais nada; quem bloqueia é o próprio `UPDATE`, que só marca como excluída se não existir lançamento ativo usando a categoria. Pelo mesmo motivo, não dá para trocar o tipo de uma categoria (entrada/saída) ou de uma fonte/destino (ex.: cartão para conta) que tem lançamentos. Mudar o fechamento, o vencimento ou o limite de um cartão é permitido.
 - **Nomes únicos entre os ativos:** por causa do soft-delete, o `UNIQUE` de nome de categoria e de fonte/destino é um índice único parcial (`WHERE excluido_em IS NULL`). A regra continua garantida pelo banco, mas excluir "Lazer" permite criar outra "Lazer". O nome também não diferencia maiúsculas (`LOWER(nome)`).
 
 ## Uso de IA
