@@ -46,6 +46,21 @@ export function inteiroEntre(valor, minimo, maximo) {
   return Number.isInteger(valor) && valor >= minimo && valor <= maximo;
 }
 
+// Id de registro: inteiro positivo que cabe num INTEGER do PostgreSQL.
+export function idValido(valor) {
+  return inteiroEntre(valor, 1, 2147483647);
+}
+
+// Data 'AAAA-MM-DD' que existe no calendário (recusa 2026-02-31, por exemplo).
+export function dataValida(texto) {
+  if (typeof texto !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(texto)) return false;
+  const [ano, mes, dia] = texto.split('-').map(Number);
+  const data = new Date(Date.UTC(ano, mes - 1, dia));
+  return (
+    data.getUTCFullYear() === ano && data.getUTCMonth() === mes - 1 && data.getUTCDate() === dia
+  );
+}
+
 // Dinheiro: maior que zero, no máximo 2 casas decimais e cabendo em
 // NUMERIC(12, 2), o tipo das colunas de valor no banco.
 export function valorMonetarioValido(valor) {

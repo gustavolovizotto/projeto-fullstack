@@ -3,6 +3,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   cpfValido,
+  dataValida,
   emailValido,
   numero,
   senhaCabeNoBcrypt,
@@ -53,4 +54,14 @@ test('valorMonetarioValido exige positivo com até 2 casas', () => {
   assert.equal(valorMonetarioValido(10.123), false);
   assert.equal(valorMonetarioValido(10000000000), false); // não cabe em NUMERIC(12,2)
   assert.equal(valorMonetarioValido(NaN), false);
+});
+
+test('dataValida exige AAAA-MM-DD de um dia que existe', () => {
+  assert.equal(dataValida('2026-11-14'), true);
+  assert.equal(dataValida('2028-02-29'), true); // ano bissexto
+  assert.equal(dataValida('2026-02-29'), false);
+  assert.equal(dataValida('2026-02-31'), false);
+  assert.equal(dataValida('2026-13-01'), false);
+  assert.equal(dataValida('14/11/2026'), false);
+  assert.equal(dataValida(''), false);
 });
