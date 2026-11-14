@@ -103,6 +103,10 @@ cd backend && npm test
 | POST | `/api/fontes-destinos` | Cria fonte/destino (`nome`, `tipo`; cartão exige `diaFechamento`, `diaVencimento`, `limite`) | 201, 400, 409 |
 | PUT | `/api/fontes-destinos/:id` | Edita fonte/destino | 200, 400, 404, 409 |
 | DELETE | `/api/fontes-destinos/:id` | Exclui fonte/destino (soft-delete) | 204, 404, 409 |
+| POST | `/api/lancamentos` | Cria lançamento (`tipo`, `descricao`, `valor`, `data`, `categoriaId`, `fonteDestinoId`, `totalParcelas?`); devolve a lista de parcelas criadas | 201, 400, 404 |
+| GET | `/api/lancamentos/:id` | Detalha um lançamento (numa parcela, inclui `grupo.valorTotal`) | 200, 404 |
+| PUT | `/api/lancamentos/:id?todasParcelas=` | Edita o lançamento, uma parcela ou todas as parcelas da compra | 200, 400, 404 |
+| DELETE | `/api/lancamentos/:id?todasParcelas=` | Exclui o lançamento, uma parcela ou todas (soft-delete) | 204, 404 |
 
 Todas as rotas abaixo de `/api`, exceto `health`, `cadastro` e `login`, exigem o cabeçalho `Authorization: Bearer <token>`. Token ausente, inválido ou expirado → 401.
 
@@ -133,6 +137,9 @@ Toda resposta de erro tem o mesmo formato:
 - **Utilitários puros** (`cpfValido`, validações de e-mail e senha) ficam em `backend/src/models/validacao.js`, junto com o teste deles.
 - **Soft-delete:** categorias, fontes/destinos e lançamentos não são apagados de verdade. A exclusão preenche `excluido_em`, e a API só lê e altera pelas views `categorias_ativas`, `fontes_destinos_ativas` e `lancamentos_ativos`. Assim nenhuma consulta precisa lembrar de filtrar os excluídos.
 - **Exclusão de categoria ou fonte/destino com lançamentos:** continua recusada com 409, como pede o enunciado. Como o soft-delete não apaga linhas, a chave estrangeira não bloqueia mais nada; quem bloqueia é o próprio `UPDATE`, que só marca como excluída se não existir lançamento ativo usando a categoria. Pelo mesmo motivo, não dá para trocar o tipo de uma categoria (entrada/saída) ou de uma fonte/destino (ex.: cartão para conta) que tem lançamentos. Mudar o fechamento, o vencimento ou o limite de um cartão é permitido.
+- **Compras parceladas:** só saídas no cartão de crédito podem ser parceladas (1 a 48 vezes). A API grava uma linha por parcela, todas com o mesmo `grupo_parcelamento`, dentro de uma transação: ou todas são gravadas, ou nenhuma. O valor é dividido em centavos inteiros e a sobra do arredondamento vai para a primeira parcela (R$ 100,00 em 3× = 33,34 + 33,33 + 33,33).
+- **Data das parcelas:** todas as parcelas guardam a **data da compra**. A fatura de cada uma é calculada a partir dessa data e do número da parcela. Consequência: a listagem e os relatórios por período contam a compra inteira no mês em que ela foi feita (regime de competência).
+- **Edição de parcelas:** dá para editar uma parcela só (descrição, valor e categoria) ou todas de uma vez (`?todasParcelas=true`: descrição, categoria, data, cartão e o valor total da compra, redividido entre as parcelas). Data, cartão e tipo de uma parcela só não mudam sozinhos, porque definem em que fatura ela cai. O número de parcelas não muda na edição: para isso, exclua e lance de novo.
 - **Nomes únicos entre os ativos:** por causa do soft-delete, o `UNIQUE` de nome de categoria e de fonte/destino é um índice único parcial (`WHERE excluido_em IS NULL`). A regra continua garantida pelo banco, mas excluir "Lazer" permite criar outra "Lazer". O nome também não diferencia maiúsculas (`LOWER(nome)`).
 
 ## Uso de IA
