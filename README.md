@@ -11,7 +11,7 @@ Disciplina: Programação Web Full Stack (Engenharia de Software).
 | Back-end | Node.js 20+, Express 5 |
 | Banco de dados | PostgreSQL (driver `pg`, com pool de conexões) |
 | Configuração | `dotenv` |
-| Segurança | `cors`, `bcrypt` (hash + salt das senhas) |
+| Segurança | `cors`, `bcrypt` (hash + salt das senhas), `jsonwebtoken` (JWT), `express-rate-limit` (login) |
 | Testes das regras | `node --test` (nativo do Node) |
 
 ## Estrutura
@@ -71,6 +71,10 @@ cd backend && npm test
 |---|---|---|---|
 | GET | `/api/health` | Confere se a API está no ar | 200 |
 | POST | `/api/auth/cadastro` | Cadastra usuário (`nome`, `email`, `cpf`, `senha`, `confirmacaoSenha`) | 201, 400, 409 |
+| POST | `/api/auth/login` | Autentica (`email`, `senha`) e devolve `{ token, usuario }` | 200, 400, 401, 429 |
+| GET | `/api/auth/me` | Dados do usuário logado | 200, 401 |
+
+Todas as rotas abaixo de `/api`, exceto `health`, `cadastro` e `login`, exigem o cabeçalho `Authorization: Bearer <token>`. Token ausente, inválido ou expirado → 401.
 
 ### Padrão de erro
 
@@ -90,6 +94,7 @@ Toda resposta de erro tem o mesmo formato:
 - **Banco:** PostgreSQL. O modelo está em [`backend/database/schema.sql`](backend/database/schema.sql).
 - **Unicidade garantida pelo banco:** `email` e `cpf` têm `UNIQUE`. Além disso, `CHECK`s obrigam o e-mail a estar em minúsculas e o CPF a ter só dígitos, para ninguém furar a unicidade gravando sem normalizar.
 - **Cadastro em transação:** o usuário, as categorias padrão e as fontes/destinos padrão (Conta corrente e Salário) são gravados juntos. Se algo falhar, nada fica gravado.
+- **Login:** o token JWT vale `JWT_EXPIRES_IN` (padrão 1h). E-mail inexistente e senha errada recebem a mesma resposta e levam o mesmo tempo (o bcrypt compara com um hash falso), para não revelar quais e-mails estão cadastrados. Depois de 5 tentativas com falha em 15 minutos, o IP recebe 429.
 - **Utilitários puros** (`cpfValido`, validações de e-mail e senha) ficam em `backend/src/models/validacao.js`, junto com o teste deles.
 - **Soft-delete:** categorias, fontes/destinos e lançamentos não são apagados de verdade. A exclusão preenche `excluido_em`, e a API só lê e altera pelas views `categorias_ativas`, `fontes_destinos_ativas` e `lancamentos_ativos`. Assim nenhuma consulta precisa lembrar de filtrar os excluídos.
 - **Nomes únicos entre os ativos:** por causa do soft-delete, o `UNIQUE` de nome de categoria e de fonte/destino é um índice único parcial (`WHERE excluido_em IS NULL`). A regra continua garantida pelo banco, mas excluir "Lazer" permite criar outra "Lazer". O nome também não diferencia maiúsculas (`LOWER(nome)`).
