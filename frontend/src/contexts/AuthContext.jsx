@@ -23,7 +23,8 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     definirAoNaoAutorizado(() => {
       logout()
-      navigate('/login', { replace: true, state: { expirou: true } })
+      // Depois de entrar de novo, volta para a tela em que o usuário estava.
+      navigate('/login', { replace: true, state: { expirou: true, de: window.location.pathname } })
     })
   }, [logout, navigate])
 
