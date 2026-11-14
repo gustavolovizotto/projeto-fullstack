@@ -3,6 +3,8 @@ import express from 'express';
 import cors from 'cors';
 import healthRoutes from './routes/health.routes.js';
 import authRoutes from './routes/auth.routes.js';
+import categoriasRoutes from './routes/categorias.routes.js';
+import { autenticar } from './middlewares/autenticar.js';
 import { rotaNaoEncontrada, tratarErros } from './middlewares/erros.js';
 
 const app = express();
@@ -12,6 +14,9 @@ app.use(express.json());
 
 app.use('/api/health', healthRoutes);
 app.use('/api/auth', authRoutes);
+
+// Daqui para baixo, todas as rotas exigem token.
+app.use('/api/categorias', autenticar, categoriasRoutes);
 
 app.use(rotaNaoEncontrada);
 app.use(tratarErros);
