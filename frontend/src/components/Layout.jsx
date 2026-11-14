@@ -1,4 +1,5 @@
-import { NavLink, Outlet } from 'react-router-dom'
+import { NavLink, Outlet, useNavigate } from 'react-router-dom'
+import { useAuth } from '../contexts/AuthContext.jsx'
 
 const MENU = [
   { para: '/', rotulo: 'Resumo' },
@@ -11,6 +12,14 @@ const MENU = [
 
 // Moldura das telas logadas: cabeçalho com menu e o conteúdo da rota.
 export default function Layout() {
+  const { usuario, logout } = useAuth()
+  const navigate = useNavigate()
+
+  function sair() {
+    logout()
+    navigate('/login', { replace: true })
+  }
+
   return (
     <div className="app">
       <header className="cabecalho">
@@ -22,6 +31,12 @@ export default function Layout() {
             </NavLink>
           ))}
         </nav>
+        <div className="usuario">
+          {usuario && <span className="texto-suave">{usuario.nome}</span>}
+          <button className="botao-link" type="button" onClick={sair}>
+            Sair
+          </button>
+        </div>
       </header>
       <main className="conteudo">
         <Outlet />
