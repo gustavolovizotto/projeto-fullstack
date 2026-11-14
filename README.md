@@ -128,6 +128,7 @@ cd backend && npm test
 | DELETE | `/api/lancamentos/:id?todasParcelas=` | Exclui o lançamento, uma parcela ou todas (soft-delete) | 204, 404 |
 | GET | `/api/relatorios/categorias?inicio=&fim=` | Saídas e entradas por categoria, com percentual e comparação com o período anterior | 200, 400 |
 | GET | `/api/relatorios/fontes-destinos?inicio=&fim=` | Entradas por fonte, saídas por destino e saldo de cada conta no período | 200, 400 |
+| GET | `/api/relatorios/faturas?meses=3` | Fatura aberta e as próximas N de cada cartão, com limite utilizado e disponível | 200, 400 |
 
 Todas as rotas abaixo de `/api`, exceto `health`, `cadastro` e `login`, exigem o cabeçalho `Authorization: Bearer <token>`. Token ausente, inválido ou expirado → 401.
 
@@ -161,6 +162,7 @@ Toda resposta de erro tem o mesmo formato:
 - **Compras parceladas:** só saídas no cartão de crédito podem ser parceladas (1 a 48 vezes). A API grava uma linha por parcela, todas com o mesmo `grupo_parcelamento`, dentro de uma transação: ou todas são gravadas, ou nenhuma. O valor é dividido em centavos inteiros e a sobra do arredondamento vai para a primeira parcela (R$ 100,00 em 3× = 33,34 + 33,33 + 33,33).
 - **Data das parcelas:** todas as parcelas guardam a **data da compra**. A fatura de cada uma é calculada a partir dessa data e do número da parcela. Consequência: a listagem e os relatórios por período contam a compra inteira no mês em que ela foi feita (regime de competência).
 - **Edição de parcelas:** dá para editar uma parcela só (descrição, valor e categoria) ou todas de uma vez (`?todasParcelas=true`: descrição, categoria, data, cartão e o valor total da compra, redividido entre as parcelas). Data, cartão e tipo de uma parcela só não mudam sozinhos, porque definem em que fatura ela cai. O número de parcelas não muda na edição: para isso, exclua e lance de novo.
+- **Faturas:** a regra de fechamento está em `backend/src/models/fatura.js` (a implementação de referência do enunciado), testada com os 4 exemplos da tabela do enunciado. A fatura de cada parcela é calculada na hora com a data da compra e o número da parcela, então mudar o dia de fechamento de um cartão recalcula tudo. A "fatura aberta" é a fatura em que cairia uma compra feita hoje. O limite utilizado soma todas as parcelas que ainda não venceram (inclusive as que caem depois das faturas mostradas).
 - **Período anterior nos relatórios:** se o período é de meses fechados (do dia 1 ao último dia), a comparação é com os mesmos meses imediatamente antes (outubro × setembro inteiro). Em qualquer outro período, com o mesmo número de dias logo antes do início.
 - **Nomes únicos entre os ativos:** por causa do soft-delete, o `UNIQUE` de nome de categoria e de fonte/destino é um índice único parcial (`WHERE excluido_em IS NULL`). A regra continua garantida pelo banco, mas excluir "Lazer" permite criar outra "Lazer". O nome também não diferencia maiúsculas (`LOWER(nome)`).
 
