@@ -36,11 +36,23 @@ projeto-fullstack/
 - Node.js 20 ou superior
 - PostgreSQL rodando localmente
 
+### Banco de dados
+Crie um banco vazio chamado `financas` (escolha uma das opções):
+
+```bash
+createdb financas
+```
+
+```bash
+docker run -d --name financas-db -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=financas -p 5432:5432 postgres:16
+```
+
 ### Back-end
 ```bash
 cd backend
 cp .env.example .env    # depois ajuste DATABASE_URL com seu usuário e senha
 npm install
+npm run db:criar        # cria as tabelas (apaga os dados se já existirem)
 npm run dev
 ```
 
@@ -67,7 +79,10 @@ Toda resposta de erro tem o mesmo formato:
 
 ## Decisões do projeto
 
-- **Banco:** PostgreSQL.
+- **Banco:** PostgreSQL. O modelo está em [`backend/database/schema.sql`](backend/database/schema.sql).
+- **Unicidade garantida pelo banco:** `email` e `cpf` têm `UNIQUE`. Além disso, `CHECK`s obrigam o e-mail a estar em minúsculas e o CPF a ter só dígitos, para ninguém furar a unicidade gravando sem normalizar.
+- **Soft-delete:** categorias, fontes/destinos e lançamentos não são apagados de verdade. A exclusão preenche `excluido_em`, e a API só lê e altera pelas views `categorias_ativas`, `fontes_destinos_ativas` e `lancamentos_ativos`. Assim nenhuma consulta precisa lembrar de filtrar os excluídos.
+- **Nomes únicos entre os ativos:** por causa do soft-delete, o `UNIQUE` de nome de categoria e de fonte/destino é um índice único parcial (`WHERE excluido_em IS NULL`). A regra continua garantida pelo banco, mas excluir "Lazer" permite criar outra "Lazer". O nome também não diferencia maiúsculas (`LOWER(nome)`).
 
 ## Uso de IA
 
