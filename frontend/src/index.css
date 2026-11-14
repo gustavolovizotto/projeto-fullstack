@@ -463,3 +463,26 @@ input:disabled {
   clip: rect(0 0 0 0);
   white-space: nowrap;
 }
+
+/* ---------- Relatórios ---------- */
+
+.atalhos-periodo {
+  align-self: end;
+  padding-bottom: 0.1rem;
+}
+
+section > .cartao + .cartao {
+  margin-top: 1rem;
+}
+
+.tabela tfoot th {
+  color: var(--cor-texto);
+  font-size: 0.95rem;
+  text-transform: none;
+  letter-spacing: 0;
+  border-bottom: 0;
+}
+
+.recharts-legend-item-text {
+  color: var(--cor-texto) !important;
+}
