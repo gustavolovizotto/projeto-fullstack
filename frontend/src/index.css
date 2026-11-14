@@ -580,3 +580,40 @@ section > .cartao + .cartao {
   font-size: 0.88rem;
   padding: 0.35rem 0;
 }
+
+/* ---------- Saúde financeira ---------- */
+
+.total small {
+  font-size: 0.8rem;
+}
+
+.dica {
+  justify-content: flex-start;
+  align-items: flex-start;
+}
+
+.dica-icone {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 1.6rem;
+  height: 1.6rem;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.dica-alerta .dica-icone {
+  color: #92400e;
+  background: #fef3c7;
+}
+
+.dica-info .dica-icone {
+  color: var(--cor-primaria-escura);
+  background: #e6f4f2;
+}
+
+.dica-positivo .dica-icone {
+  color: #166534;
+  background: #dcfce7;
+}

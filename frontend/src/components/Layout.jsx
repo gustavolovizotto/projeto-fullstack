@@ -8,6 +8,7 @@ const MENU = [
   { para: '/fontes-destinos', rotulo: 'Fontes/destinos' },
   { para: '/relatorios', rotulo: 'Relatórios' },
   { para: '/faturas', rotulo: 'Faturas' },
+  { para: '/saude', rotulo: 'Saúde' },
 ]
 
 // Moldura das telas logadas: cabeçalho com menu e o conteúdo da rota.

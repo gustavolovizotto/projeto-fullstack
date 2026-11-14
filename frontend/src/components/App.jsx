@@ -9,7 +9,7 @@ import Lancamentos from './Lancamentos.jsx'
 import Resumo from './Resumo.jsx'
 import Relatorios from './Relatorios.jsx'
 import Faturas from './Faturas.jsx'
-import EmConstrucao from './EmConstrucao.jsx'
+import SaudeFinanceira from './SaudeFinanceira.jsx'
 
 export default function App() {
   return (
@@ -25,6 +25,7 @@ export default function App() {
           <Route path="/fontes-destinos" element={<FontesDestinos />} />
           <Route path="/relatorios" element={<Relatorios />} />
           <Route path="/faturas" element={<Faturas />} />
+          <Route path="/saude" element={<SaudeFinanceira />} />
         </Route>
       </Route>
 
