@@ -2,7 +2,7 @@
 // Importado antes de tudo no server.js e nos scripts do banco.
 import 'dotenv/config';
 
-const obrigatorias = ['DATABASE_URL', 'FRONT_URL'];
+const obrigatorias = ['DATABASE_URL', 'FRONT_URL', 'JWT_SECRET'];
 
 const faltando = obrigatorias.filter((nome) => !process.env[nome]);
 
