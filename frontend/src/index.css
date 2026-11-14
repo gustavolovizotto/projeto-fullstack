@@ -513,3 +513,70 @@ section > .cartao + .cartao {
 .grade-2 + .cartao {
   margin-top: 1rem;
 }
+
+/* ---------- Faturas ---------- */
+
+.cartao-credito + .cartao-credito {
+  margin-top: 1rem;
+}
+
+.texto-normal {
+  color: var(--cor-texto);
+}
+
+.limite p {
+  margin: 0.5rem 0 1rem;
+}
+
+.limite-barra {
+  height: 10px;
+  border-radius: 999px;
+  background: var(--cor-fundo);
+  border: 1px solid var(--cor-borda);
+  overflow: hidden;
+}
+
+.limite-uso {
+  height: 100%;
+  border-radius: 999px;
+  background: var(--cor-primaria);
+}
+
+.limite-uso.estourou {
+  background: var(--cor-saida);
+}
+
+.faturas {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 0.75rem;
+}
+
+.fatura {
+  padding: 0.9rem;
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio);
+}
+
+.fatura.aberta {
+  border-color: var(--cor-primaria);
+  box-shadow: inset 0 3px 0 var(--cor-primaria);
+}
+
+.fatura-cabecalho {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.fatura-total {
+  margin: 0.4rem 0 0.6rem;
+  font-size: 1.3rem;
+  font-weight: 700;
+}
+
+.fatura .lista-item {
+  font-size: 0.88rem;
+  padding: 0.35rem 0;
+}

@@ -8,6 +8,7 @@ import FontesDestinos from './FontesDestinos.jsx'
 import Lancamentos from './Lancamentos.jsx'
 import Resumo from './Resumo.jsx'
 import Relatorios from './Relatorios.jsx'
+import Faturas from './Faturas.jsx'
 import EmConstrucao from './EmConstrucao.jsx'
 
 export default function App() {
@@ -23,7 +24,7 @@ export default function App() {
           <Route path="/categorias" element={<Categorias />} />
           <Route path="/fontes-destinos" element={<FontesDestinos />} />
           <Route path="/relatorios" element={<Relatorios />} />
-          <Route path="/faturas" element={<EmConstrucao titulo="Faturas" />} />
+          <Route path="/faturas" element={<Faturas />} />
         </Route>
       </Route>
 
