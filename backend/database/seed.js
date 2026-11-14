@@ -38,6 +38,8 @@ const USUARIOS = [
         [m, 21, 'entrada', 'Depósito na poupança', 400, 'Outros', 'Poupança'],
       ]),
       [-1, 7, 'entrada', 'Site para cliente', 800, 'Outros', 'Freelas'],
+      // Gasto fora do padrão no mês atual, para a página de saúde financeira apontar.
+      [0, 2, 'saida', 'Jantar de aniversário', 280, 'Lazer', 'Conta corrente'],
       [-2, 28, 'saida', 'Celular', 1800, 'Mobilidade', 'Visa', 6],
       [-1, 15, 'saida', 'Notebook', 4000, 'Educação', 'Nubank', 10],
       // Feita no dia do fechamento do Nubank: entra na fatura do mês seguinte.
