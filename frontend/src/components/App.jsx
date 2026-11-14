@@ -3,6 +3,7 @@ import Layout from './Layout.jsx'
 import RotaProtegida from './RotaProtegida.jsx'
 import Login from './Login.jsx'
 import Cadastro from './Cadastro.jsx'
+import Categorias from './Categorias.jsx'
 import EmConstrucao from './EmConstrucao.jsx'
 
 export default function App() {
@@ -15,7 +16,7 @@ export default function App() {
         <Route element={<Layout />}>
           <Route path="/" element={<EmConstrucao titulo="Resumo do mês" />} />
           <Route path="/lancamentos" element={<EmConstrucao titulo="Lançamentos" />} />
-          <Route path="/categorias" element={<EmConstrucao titulo="Categorias" />} />
+          <Route path="/categorias" element={<Categorias />} />
           <Route path="/fontes-destinos" element={<EmConstrucao titulo="Fontes e destinos" />} />
           <Route path="/relatorios" element={<EmConstrucao titulo="Relatórios" />} />
           <Route path="/faturas" element={<EmConstrucao titulo="Faturas" />} />
