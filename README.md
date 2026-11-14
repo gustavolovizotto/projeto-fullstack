@@ -126,6 +126,7 @@ cd backend && npm test
 | GET | `/api/lancamentos/:id` | Detalha um lançamento (numa parcela, inclui `grupo.valorTotal`) | 200, 404 |
 | PUT | `/api/lancamentos/:id?todasParcelas=` | Edita o lançamento, uma parcela ou todas as parcelas da compra | 200, 400, 404 |
 | DELETE | `/api/lancamentos/:id?todasParcelas=` | Exclui o lançamento, uma parcela ou todas (soft-delete) | 204, 404 |
+| GET | `/api/relatorios/categorias?inicio=&fim=` | Saídas e entradas por categoria, com percentual e comparação com o período anterior | 200, 400 |
 
 Todas as rotas abaixo de `/api`, exceto `health`, `cadastro` e `login`, exigem o cabeçalho `Authorization: Bearer <token>`. Token ausente, inválido ou expirado → 401.
 
@@ -159,6 +160,7 @@ Toda resposta de erro tem o mesmo formato:
 - **Compras parceladas:** só saídas no cartão de crédito podem ser parceladas (1 a 48 vezes). A API grava uma linha por parcela, todas com o mesmo `grupo_parcelamento`, dentro de uma transação: ou todas são gravadas, ou nenhuma. O valor é dividido em centavos inteiros e a sobra do arredondamento vai para a primeira parcela (R$ 100,00 em 3× = 33,34 + 33,33 + 33,33).
 - **Data das parcelas:** todas as parcelas guardam a **data da compra**. A fatura de cada uma é calculada a partir dessa data e do número da parcela. Consequência: a listagem e os relatórios por período contam a compra inteira no mês em que ela foi feita (regime de competência).
 - **Edição de parcelas:** dá para editar uma parcela só (descrição, valor e categoria) ou todas de uma vez (`?todasParcelas=true`: descrição, categoria, data, cartão e o valor total da compra, redividido entre as parcelas). Data, cartão e tipo de uma parcela só não mudam sozinhos, porque definem em que fatura ela cai. O número de parcelas não muda na edição: para isso, exclua e lance de novo.
+- **Período anterior nos relatórios:** se o período é de meses fechados (do dia 1 ao último dia), a comparação é com os mesmos meses imediatamente antes (outubro × setembro inteiro). Em qualquer outro período, com o mesmo número de dias logo antes do início.
 - **Nomes únicos entre os ativos:** por causa do soft-delete, o `UNIQUE` de nome de categoria e de fonte/destino é um índice único parcial (`WHERE excluido_em IS NULL`). A regra continua garantida pelo banco, mas excluir "Lazer" permite criar outra "Lazer". O nome também não diferencia maiúsculas (`LOWER(nome)`).
 
 ## Uso de IA
