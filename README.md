@@ -1,6 +1,6 @@
 # Projeto 2: Controle Financeiro
 
-Aplicação full stack de controle financeiro pessoal. O usuário se cadastra, faz login e registra entradas e saídas de dinheiro por categoria e por fonte/destino. A aplicação gera relatórios por categoria, por fonte/destino e a previsão das faturas dos cartões de crédito.
+Aplicação full stack de controle financeiro pessoal. O usuário se cadastra, faz login e registra entradas e saídas de dinheiro por categoria e por fonte/destino. A aplicação gera relatórios por categoria, por fonte/destino e a previsão das faturas dos cartões de crédito, além de uma página de saúde financeira (desafio).
 
 Disciplina: Programação Web Full Stack (Engenharia de Software).
 
@@ -9,11 +9,14 @@ Disciplina: Programação Web Full Stack (Engenharia de Software).
 | Camada | Tecnologia |
 |---|---|
 | Back-end | Node.js 20+, Express 5 |
-| Banco de dados | PostgreSQL (driver `pg`, com pool de conexões) |
+| Banco de dados | PostgreSQL, driver `pg` com pool de conexões, SQL puro (sem ORM) |
 | Configuração | `dotenv` |
-| Segurança | `cors`, `bcrypt` (hash + salt das senhas), `jsonwebtoken` (JWT), `express-rate-limit` (login) |
-| Testes das regras | `node --test` (nativo do Node) |
-| Front-end | React 19 + Vite, React Router, `fetch` nativo |
+| Segurança | `bcrypt` (hash + salt das senhas), `jsonwebtoken` (JWT), `cors`, `express-rate-limit` (login) |
+| Testes das regras de negócio | `node --test` (nativo do Node, sem biblioteca) |
+| Front-end | React 19 + Vite, `react-router-dom`, `fetch` nativo |
+| Gráficos | `recharts` |
+
+Bibliotecas de terceiros usadas (para conferência com a lista aprovada): **back-end** `express`, `pg`, `dotenv`, `bcrypt`, `jsonwebtoken`, `cors`, `express-rate-limit`; **front-end** `react`, `react-dom`, `react-router-dom`, `recharts`. Máscaras, validações e formatação de moeda e data são funções próprias (`Intl` nativo).
 
 ## Estrutura
 
@@ -21,12 +24,12 @@ Disciplina: Programação Web Full Stack (Engenharia de Software).
 projeto-fullstack/
 ├── backend/
 │   ├── .env.example        → modelo das variáveis de ambiente
-│   ├── database/           → scripts SQL e seed
+│   ├── database/           → schema.sql, script de criação e seed
 │   └── src/
 │       ├── server.js       → cria o app Express, registra middlewares e rotas
 │       ├── routes/         → rotas + código dos controladores
-│       ├── models/         → acesso ao banco de dados e regras de negócio
-│       ├── middlewares/    → autenticação, validação, tratamento de erros
+│       ├── models/         → acesso ao banco e regras de negócio (com os *.test.js)
+│       ├── middlewares/    → autenticação, validação, rate limit, tratamento de erros
 │       └── config/         → variáveis de ambiente e pool do banco
 ├── frontend/
 │   ├── .env.example        → URL da API
@@ -34,8 +37,8 @@ projeto-fullstack/
 │       ├── main.jsx        → ponto de entrada (monta o React Router)
 │       ├── index.css       → estilos globais
 │       ├── components/     → componentes e páginas em JSX
-│       ├── contexts/       → AuthContext e demais contextos
-│       └── services/       → cliente HTTP (único acesso à API) e formatação
+│       ├── contexts/       → AuthContext
+│       └── services/       → cliente HTTP (único acesso à API), formatação e validação
 └── README.md
 ```
 
@@ -43,9 +46,9 @@ projeto-fullstack/
 
 ### Pré-requisitos
 - Node.js 20 ou superior
-- PostgreSQL rodando localmente
+- PostgreSQL 13 ou superior
 
-### Banco de dados
+### 1. Banco de dados
 Crie um banco vazio chamado `financas` (escolha uma das opções):
 
 ```bash
@@ -56,14 +59,28 @@ createdb financas
 docker run -d --name financas-db -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=financas -p 5432:5432 postgres:16
 ```
 
-### Back-end
+### 2. Back-end
 ```bash
 cd backend
-cp .env.example .env    # depois ajuste DATABASE_URL com seu usuário e senha
+cp .env.example .env    # ajuste DATABASE_URL e troque o JWT_SECRET
 npm install
 npm run db:reset        # cria as tabelas e carrega os dados de demonstração
 npm run dev
 ```
+
+A API sobe em `http://localhost:3000`. Para conferir: `curl http://localhost:3000/api/health`.
+
+Variáveis do `.env` (o arquivo fica fora do Git; o modelo é o `.env.example`):
+
+| Variável | Para quê |
+|---|---|
+| `PORT` | porta da API (padrão 3000) |
+| `DATABASE_URL` | conexão com o PostgreSQL: `postgres://usuario:senha@host:porta/banco` |
+| `FRONT_URL` | origem liberada no CORS (`http://localhost:5173`) |
+| `JWT_SECRET` | segredo que assina os tokens; gere com `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"` |
+| `JWT_EXPIRES_IN` | validade do token (padrão `1h`) |
+
+A API não sobe se faltar `DATABASE_URL`, `FRONT_URL` ou `JWT_SECRET`.
 
 Scripts do banco:
 
@@ -73,19 +90,7 @@ Scripts do banco:
 | `npm run db:seed` | Carrega os dados de demonstração num banco vazio |
 | `npm run db:reset` | `db:criar` + `db:seed` |
 
-### Dados de demonstração
-O seed cria dois usuários com o mês atual e os dois anteriores de lançamentos, cartões e compras parceladas (incluindo uma compra feita no dia do fechamento do cartão):
-
-| Usuário | E-mail | Senha |
-|---|---|---|
-| Ana Souza | `ana@exemplo.com` | `Senha123` |
-| Bruno Lima | `bruno@exemplo.com` | `Senha123` |
-
-As datas são relativas ao dia em que o seed roda, então a demonstração sempre tem dados recentes.
-
-A API sobe em `http://localhost:3000`. Para conferir: `curl http://localhost:3000/api/health`.
-
-### Front-end
+### 3. Front-end
 Em outro terminal, com a API rodando:
 
 ```bash
@@ -97,8 +102,18 @@ npm run dev
 
 A aplicação abre em `http://localhost:5173` (porta fixa, porque é a origem liberada no CORS da API).
 
+### Dados de demonstração
+O seed cria dois usuários com o mês atual e os dois anteriores de lançamentos, cartões e compras parceladas, incluindo uma compra feita no dia do fechamento do cartão e um gasto fora do padrão para a página de saúde financeira:
+
+| Usuário | E-mail | Senha |
+|---|---|---|
+| Ana Souza | `ana@exemplo.com` | `Senha123` |
+| Bruno Lima | `bruno@exemplo.com` | `Senha123` |
+
+As datas são relativas ao dia em que o seed roda, então a demonstração sempre tem dados recentes.
+
 ### Testes
-Testes das regras de negócio (CPF, senha e, mais adiante, parcelas e faturas):
+Testes das regras de negócio (CPF, e-mail, senha, valores, datas, divisão de parcelas, regra de fechamento de fatura com os exemplos do enunciado, período anterior e saúde financeira):
 
 ```bash
 cd backend && npm test
@@ -112,7 +127,6 @@ cd backend && npm test
 | POST | `/api/auth/cadastro` | Cadastra usuário (`nome`, `email`, `cpf`, `senha`, `confirmacaoSenha`) | 201, 400, 409 |
 | POST | `/api/auth/login` | Autentica (`email`, `senha`) e devolve `{ token, usuario }` | 200, 400, 401, 429 |
 | GET | `/api/auth/me` | Dados do usuário logado | 200, 401 |
-
 | GET | `/api/categorias?tipo=` | Lista as categorias do usuário (filtro opcional `entrada`/`saida`) | 200, 400 |
 | POST | `/api/categorias` | Cria categoria (`nome`, `tipo`) | 201, 400, 409 |
 | PUT | `/api/categorias/:id` | Edita categoria | 200, 400, 404, 409 |
@@ -148,6 +162,72 @@ Toda resposta de erro tem o mesmo formato:
 
 `campos` só aparece quando o erro é de um campo específico.
 
+## Demonstração pela linha de comando
+
+Com a API rodando e o seed carregado. Guarde o token de cada usuário:
+
+```bash
+ANA=$(curl -s -X POST localhost:3000/api/auth/login -H 'Content-Type: application/json' -d '{"email":"ana@exemplo.com","senha":"Senha123"}' | node -pe 'JSON.parse(require("fs").readFileSync(0)).token')
+```
+
+```bash
+BRUNO=$(curl -s -X POST localhost:3000/api/auth/login -H 'Content-Type: application/json' -d '{"email":"bruno@exemplo.com","senha":"Senha123"}' | node -pe 'JSON.parse(require("fs").readFileSync(0)).token')
+```
+
+Requisição sem token → 401:
+
+```bash
+curl -i localhost:3000/api/lancamentos
+```
+
+O lançamento 1 é da Ana. Com o token do Bruno, ler, editar e excluir → 404 nos três:
+
+```bash
+curl -i localhost:3000/api/lancamentos/1 -H "Authorization: Bearer $BRUNO"
+```
+
+```bash
+curl -i -X PUT localhost:3000/api/lancamentos/1 -H "Authorization: Bearer $BRUNO" -H 'Content-Type: application/json' -d '{"tipo":"entrada","descricao":"x","valor":1,"data":"2026-11-01","categoriaId":10,"fonteDestinoId":3}'
+```
+
+```bash
+curl -i -X DELETE localhost:3000/api/lancamentos/1 -H "Authorization: Bearer $BRUNO"
+```
+
+Com o token da Ana, o mesmo lançamento responde 200:
+
+```bash
+curl localhost:3000/api/lancamentos/1 -H "Authorization: Bearer $ANA"
+```
+
+## Checklist do enunciado
+
+| Item | Como foi garantido |
+|---|---|
+| Mesmo e-mail com maiúsculas diferentes é recusado | e-mail gravado com `trim().toLowerCase()`, `UNIQUE` e `CHECK` de minúsculas no banco → 409 em `campos.email` |
+| Mesmo CPF com e sem pontuação é recusado | CPF gravado só com dígitos, `UNIQUE` e `CHECK` de 11 dígitos no banco → 409 em `campos.cpf` |
+| Remover a verificação prévia não permite duplicatas | não existe verificação prévia no código; quem garante é o `UNIQUE` |
+| Nenhuma resposta contém `senha_hash` | só o login lê a coluna, para comparar com o bcrypt; as outras consultas listam as colunas públicas |
+| Trocar o id na URL não dá acesso a dados de outro usuário | toda consulta filtra por `usuario_id` do token → 404 |
+| Saída não aceita categoria de entrada | 400 em `campos.categoriaId` |
+| R$ 100,00 em 3× soma exatamente R$ 100,00 | divisão em centavos inteiros (33,34 + 33,33 + 33,33), testada em `parcelas.test.js` |
+| Compra no dia do fechamento cai na fatura seguinte | regra de referência do enunciado, testada em `fatura.test.js`; no seed, o "Curso de inglês" |
+| Token expirado leva de volta ao login sem erro na tela | o cliente HTTP desloga em qualquer 401 com token e o login mostra "Sua sessão expirou" |
+| `.env` fora do repositório, `.env.example` dentro | `.gitignore` na raiz |
+| O README sobe o projeto do zero | seções "Como rodar" e "Dados de demonstração" |
+
+## Roteiro da apresentação
+
+| # | Item do enunciado | Onde mostrar |
+|---|---|---|
+| 1 | Código-fonte | estrutura acima, `backend/database/schema.sql`, `routes/` e `models/` do back, `components/` e `contexts/` do front |
+| 2 | Execução pela linha de comando | `npm run db:reset` e `npm run dev` no back, `npm run dev` no front |
+| 3 | Cadastro e unicidade | tela "Criar conta": cadastrar, depois repetir o e-mail (com outra caixa) e depois o CPF (sem pontuação) |
+| 4 | Login, isolamento e token | login na tela; comandos da seção "Demonstração pela linha de comando" |
+| 5 | CRUD completo | telas de Categorias, Fontes/destinos e Lançamentos, incluindo uma compra parcelada no cartão |
+| 6 | Relatórios | Relatórios (por categoria e por fonte/destino) e Faturas, mostrando em qual fatura caiu cada parcela da compra do item 5 |
+| 7 | Desafio | página "Saúde" |
+
 ## Saúde financeira (desafio)
 
 Tudo é calculado no back-end, em `backend/src/models/saudeFinanceira.js` (função pura, testada em `saudeFinanceira.test.js`). As dicas são geradas por regras, sem modelo de linguagem.
@@ -179,20 +259,21 @@ A página avisa, em texto visível, que as informações são educativas e não 
 - **Banco:** PostgreSQL. O modelo está em [`backend/database/schema.sql`](backend/database/schema.sql).
 - **Unicidade garantida pelo banco:** `email` e `cpf` têm `UNIQUE`. Além disso, `CHECK`s obrigam o e-mail a estar em minúsculas e o CPF a ter só dígitos, para ninguém furar a unicidade gravando sem normalizar.
 - **Cadastro em transação:** o usuário, as categorias padrão e as fontes/destinos padrão (Conta corrente e Salário) são gravados juntos. Se algo falhar, nada fica gravado.
-- **Front sem pasta de utilitários:** o enunciado limita o `src/` do front a `components/`, `contexts/` e `services/`. Funções de formatação e máscara (moeda, datas, CPF) ficam em `frontend/src/services/formatos.js`, e as validações do lado do cliente (mesmo `cpfValido` do back) em `frontend/src/services/validacao.js`.
+- **Login:** o token JWT vale `JWT_EXPIRES_IN` (padrão 1h). E-mail inexistente e senha errada recebem a mesma resposta e levam o mesmo tempo (o bcrypt compara com um hash falso), para não revelar quais e-mails estão cadastrados. Depois de 5 tentativas com falha em 15 minutos, o IP recebe 429.
+- **Utilitários puros** (`cpfValido`, validações, divisão de parcelas, datas, fatura e saúde financeira) ficam em `backend/src/models/`, cada um com seu teste ao lado.
+- **Soft-delete:** categorias, fontes/destinos e lançamentos não são apagados de verdade. A exclusão preenche `excluido_em`, e a API só lê e altera pelas views `categorias_ativas`, `fontes_destinos_ativas` e `lancamentos_ativos`. Assim nenhuma consulta precisa lembrar de filtrar os excluídos.
+- **Nomes únicos entre os ativos:** por causa do soft-delete, o `UNIQUE` de nome de categoria e de fonte/destino é um índice único parcial (`WHERE excluido_em IS NULL`). A regra continua garantida pelo banco, mas excluir "Lazer" permite criar outra "Lazer". O nome também não diferencia maiúsculas (`LOWER(nome)`).
+- **Exclusão de categoria ou fonte/destino com lançamentos:** continua recusada com 409, como pede o enunciado. Como o soft-delete não apaga linhas, a chave estrangeira não bloqueia mais nada; quem bloqueia é o próprio `UPDATE`, que só marca como excluída se não existir lançamento ativo usando o registro. Pelo mesmo motivo, não dá para trocar o tipo de uma categoria (entrada/saída) ou de uma fonte/destino (ex.: cartão para conta) que tem lançamentos. Mudar o fechamento, o vencimento ou o limite de um cartão é permitido.
+- **Compras parceladas:** só saídas no cartão de crédito podem ser parceladas (1 a 48 vezes). A API grava uma linha por parcela, todas com o mesmo `grupo_parcelamento`, dentro de uma transação: ou todas são gravadas, ou nenhuma. O valor é dividido em centavos inteiros e a sobra do arredondamento vai para a primeira parcela (R$ 100,00 em 3× = 33,34 + 33,33 + 33,33).
+- **Data das parcelas:** todas as parcelas guardam a **data da compra**. A fatura de cada uma é calculada a partir dessa data e do número da parcela. Consequência: a listagem e os relatórios por período contam a compra inteira no mês em que ela foi feita (regime de competência). Escolhemos assim porque segue a dica do enunciado e porque mudar o fechamento de um cartão recalcula todas as faturas sem precisar regravar nada.
+- **Edição de parcelas:** dá para editar uma parcela só (descrição, valor e categoria) ou todas de uma vez (`?todasParcelas=true`: descrição, categoria, data, cartão e o valor total da compra, redividido entre as parcelas). Data, cartão e tipo de uma parcela só não mudam sozinhos, porque definem em que fatura ela cai. O número de parcelas não muda na edição: para isso, exclua e lance de novo.
+- **Faturas:** a regra de fechamento está em `backend/src/models/fatura.js` (a implementação de referência do enunciado), testada com os 4 exemplos da tabela do enunciado. A "fatura aberta" é a fatura em que cairia uma compra feita hoje. O limite utilizado soma todas as parcelas que ainda não venceram (inclusive as que caem depois das faturas mostradas).
+- **Período anterior nos relatórios:** se o período é de meses fechados (do dia 1 ao último dia), a comparação é com os mesmos meses imediatamente antes (outubro × setembro inteiro). Em qualquer outro período, com o mesmo número de dias logo antes do início.
+- **Front sem pasta de utilitários:** o enunciado limita o `src/` do front a `components/`, `contexts/` e `services/`. Funções de formatação e máscara (moeda, datas, CPF) ficam em `frontend/src/services/formatos.js`, as validações do lado do cliente (mesmo `cpfValido` do back) em `frontend/src/services/validacao.js` e o hook de carregamento das telas em `frontend/src/services/useCarregar.js`.
 - **Cliente HTTP único:** `frontend/src/services/api.js` usa o `fetch` nativo, põe o `Authorization` em toda requisição e, se uma requisição autenticada voltar 401, faz logout.
 - **Sessão no front:** o `AuthContext` guarda o token no `localStorage` (sobrevive ao recarregar). Ao abrir o app, o token é conferido em `/api/auth/me`. As telas logadas ficam dentro de `RotaProtegida`, que manda para o login quem não tem token e volta para a tela de origem depois de entrar.
-- **Login:** o token JWT vale `JWT_EXPIRES_IN` (padrão 1h). E-mail inexistente e senha errada recebem a mesma resposta e levam o mesmo tempo (o bcrypt compara com um hash falso), para não revelar quais e-mails estão cadastrados. Depois de 5 tentativas com falha em 15 minutos, o IP recebe 429.
-- **Utilitários puros** (`cpfValido`, validações de e-mail e senha) ficam em `backend/src/models/validacao.js`, junto com o teste deles.
-- **Soft-delete:** categorias, fontes/destinos e lançamentos não são apagados de verdade. A exclusão preenche `excluido_em`, e a API só lê e altera pelas views `categorias_ativas`, `fontes_destinos_ativas` e `lancamentos_ativos`. Assim nenhuma consulta precisa lembrar de filtrar os excluídos.
-- **Exclusão de categoria ou fonte/destino com lançamentos:** continua recusada com 409, como pede o enunciado. Como o soft-delete não apaga linhas, a chave estrangeira não bloqueia mais nada; quem bloqueia é o próprio `UPDATE`, que só marca como excluída se não existir lançamento ativo usando a categoria. Pelo mesmo motivo, não dá para trocar o tipo de uma categoria (entrada/saída) ou de uma fonte/destino (ex.: cartão para conta) que tem lançamentos. Mudar o fechamento, o vencimento ou o limite de um cartão é permitido.
-- **Compras parceladas:** só saídas no cartão de crédito podem ser parceladas (1 a 48 vezes). A API grava uma linha por parcela, todas com o mesmo `grupo_parcelamento`, dentro de uma transação: ou todas são gravadas, ou nenhuma. O valor é dividido em centavos inteiros e a sobra do arredondamento vai para a primeira parcela (R$ 100,00 em 3× = 33,34 + 33,33 + 33,33).
-- **Data das parcelas:** todas as parcelas guardam a **data da compra**. A fatura de cada uma é calculada a partir dessa data e do número da parcela. Consequência: a listagem e os relatórios por período contam a compra inteira no mês em que ela foi feita (regime de competência).
-- **Edição de parcelas:** dá para editar uma parcela só (descrição, valor e categoria) ou todas de uma vez (`?todasParcelas=true`: descrição, categoria, data, cartão e o valor total da compra, redividido entre as parcelas). Data, cartão e tipo de uma parcela só não mudam sozinhos, porque definem em que fatura ela cai. O número de parcelas não muda na edição: para isso, exclua e lance de novo.
-- **Faturas:** a regra de fechamento está em `backend/src/models/fatura.js` (a implementação de referência do enunciado), testada com os 4 exemplos da tabela do enunciado. A fatura de cada parcela é calculada na hora com a data da compra e o número da parcela, então mudar o dia de fechamento de um cartão recalcula tudo. A "fatura aberta" é a fatura em que cairia uma compra feita hoje. O limite utilizado soma todas as parcelas que ainda não venceram (inclusive as que caem depois das faturas mostradas).
-- **Período anterior nos relatórios:** se o período é de meses fechados (do dia 1 ao último dia), a comparação é com os mesmos meses imediatamente antes (outubro × setembro inteiro). Em qualquer outro período, com o mesmo número de dias logo antes do início.
-- **Nomes únicos entre os ativos:** por causa do soft-delete, o `UNIQUE` de nome de categoria e de fonte/destino é um índice único parcial (`WHERE excluido_em IS NULL`). A regra continua garantida pelo banco, mas excluir "Lazer" permite criar outra "Lazer". O nome também não diferencia maiúsculas (`LOWER(nome)`).
+- **Gráficos:** as cores das séries (azul `#2a78d6` e laranja `#eb6834`) passam nos testes de separação para daltonismo e de contraste com o fundo. Todo gráfico tem uma tabela com os mesmos números ao lado, e as variações usam seta e texto, não só cor.
 
 ## Uso de IA
 
-O grupo usou assistente de IA (Claude) como apoio para planejamento e escrita de código. Todo o código foi revisado e é explicado pelos integrantes.
+O grupo usou assistente de IA (Claude) como apoio no planejamento dos cards e na escrita do código e dos testes. Todo o código foi revisado e é explicado pelos integrantes.
