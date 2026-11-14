@@ -8,6 +8,11 @@ export class ErroHttp extends Error {
   }
 }
 
+// O banco recusou por causa de um UNIQUE (código 23505 do PostgreSQL)?
+export function violouUnico(erro, constraint) {
+  return erro.code === '23505' && erro.constraint === constraint;
+}
+
 export function rotaNaoEncontrada(req, res) {
   res.status(404).json({ erro: 'Rota não encontrada.' });
 }
