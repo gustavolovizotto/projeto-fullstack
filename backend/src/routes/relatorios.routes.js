@@ -1,6 +1,11 @@
 import { Router } from 'express';
 import * as Relatorio from '../models/Relatorio.js';
-import { periodoAnterior } from '../models/datas.js';
+import * as FonteDestino from '../models/FonteDestino.js';
+import * as Lancamento from '../models/Lancamento.js';
+import { hojeISO, periodoAnterior } from '../models/datas.js';
+import { montarFaturas } from '../models/fatura.js';
+import { inteiroEntre } from '../models/validacao.js';
+import { ErroHttp } from '../middlewares/erros.js';
 import { validarPeriodo } from '../middlewares/validarPeriodo.js';
 
 // Montado em /api/relatorios, depois do middleware autenticar.
@@ -76,6 +81,29 @@ router.get('/fontes-destinos', validarPeriodo, async (req, res) => {
     destinos,
     contas,
   });
+});
+
+// RF9: ?meses=3 → fatura aberta + as próximas N de cada cartão do usuário.
+router.get('/faturas', async (req, res) => {
+  const meses = req.query.meses === undefined ? 3 : Number(req.query.meses);
+  if (!inteiroEntre(meses, 1, 12)) {
+    throw new ErroHttp(400, 'Dados inválidos.', { meses: 'Use de 1 a 12 meses.' });
+  }
+
+  const hoje = hojeISO();
+  const cartoes = await FonteDestino.listar(req.usuarioId, 'cartao_credito');
+  const resposta = [];
+  for (const cartao of cartoes) {
+    const parcelas = await Lancamento.listarSaidasDoCartao(cartao.id, req.usuarioId);
+    resposta.push({
+      id: cartao.id,
+      nome: cartao.nome,
+      diaFechamento: cartao.diaFechamento,
+      diaVencimento: cartao.diaVencimento,
+      ...montarFaturas(cartao, parcelas, hoje, meses),
+    });
+  }
+  res.json({ hoje, cartoes: resposta });
 });
 
 export default router;

@@ -149,6 +149,22 @@ export async function atualizarGrupo(grupo, usuarioId, { descricao, valor, data,
   });
 }
 
+// Todas as saídas ativas de um cartão, para montar as faturas.
+// ponytail: carrega o histórico inteiro do cartão em memória. Com muitos anos
+// de uso, filtrar no SQL as compras que ainda podem cair em fatura futura
+// (data >= hoje - 48 meses, o máximo de parcelas).
+export async function listarSaidasDoCartao(cartaoId, usuarioId) {
+  const { rows } = await pool.query(
+    `SELECT id, descricao, valor, data, parcela_atual AS "parcelaAtual",
+       total_parcelas AS "totalParcelas"
+     FROM lancamentos_ativos
+     WHERE fonte_destino_id = $1 AND usuario_id = $2 AND tipo = 'saida'
+     ORDER BY data, id`,
+    [cartaoId, usuarioId],
+  );
+  return rows;
+}
+
 // Quantas parcelas ativas a compra ainda tem (para checar o valor mínimo).
 export async function contarParcelasAtivas(grupo, usuarioId) {
   const { rows } = await pool.query(
