@@ -21,7 +21,7 @@ const USUARIOS = [
     fontes: [
       { nome: 'Poupança', tipo: 'conta' },
       { nome: 'Freelas', tipo: 'renda' },
-      { nome: 'Nubank', tipo: 'cartao_credito', diaFechamento: 3, diaVencimento: 10, limite: 5000 },
+      { nome: 'Nubank', tipo: 'cartao_credito', diaFechamento: 3, diaVencimento: 10, limite: 8000 },
       { nome: 'Visa', tipo: 'cartao_credito', diaFechamento: 25, diaVencimento: 5, limite: 3000 },
     ],
     // [mês (0 = atual, -1 = anterior...), dia, tipo, descrição, valor, categoria, fonte, parcelas]
