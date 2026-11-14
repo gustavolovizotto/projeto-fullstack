@@ -6,6 +6,29 @@ export function moeda(valor) {
   return formatadorMoeda.format(valor ?? 0)
 }
 
+// Máscara de dinheiro: o usuário digita só números e eles entram pelos
+// centavos, como numa maquininha. '123456' → '1.234,56'. Até 12 dígitos,
+// o máximo que cabe no NUMERIC(12, 2) do banco.
+export function mascaraMoeda(texto) {
+  const digitos = String(texto).replace(/\D/g, '').replace(/^0+/, '').slice(0, 12)
+  if (!digitos) return ''
+  return (Number(digitos) / 100).toLocaleString('pt-BR', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })
+}
+
+// Texto do campo de dinheiro → número para a API. '1.234,56' → 1234.56; '' → NaN.
+export function lerMoeda(texto) {
+  const digitos = String(texto).replace(/\D/g, '')
+  return digitos ? Number(digitos) / 100 : NaN
+}
+
+// Número vindo da API → texto do campo de dinheiro. 1234.5 → '1.234,50'.
+export function moedaParaCampo(valor) {
+  return valor == null ? '' : mascaraMoeda(String(Math.round(valor * 100)))
+}
+
 // Máscara progressiva de CPF: '5299822' → '529.982.2'.
 export function mascaraCpf(valor) {
   return String(valor)
