@@ -11,7 +11,8 @@ Disciplina: Programação Web Full Stack (Engenharia de Software).
 | Back-end | Node.js 20+, Express 5 |
 | Banco de dados | PostgreSQL (driver `pg`, com pool de conexões) |
 | Configuração | `dotenv` |
-| Segurança | `cors` |
+| Segurança | `cors`, `bcrypt` (hash + salt das senhas) |
+| Testes das regras | `node --test` (nativo do Node) |
 
 ## Estrutura
 
@@ -58,11 +59,18 @@ npm run dev
 
 A API sobe em `http://localhost:3000`. Para conferir: `curl http://localhost:3000/api/health`.
 
+Testes das regras de negócio (CPF, senha e, mais adiante, parcelas e faturas):
+
+```bash
+cd backend && npm test
+```
+
 ## Rotas da API
 
 | Método | Rota | Descrição | Respostas |
 |---|---|---|---|
 | GET | `/api/health` | Confere se a API está no ar | 200 |
+| POST | `/api/auth/cadastro` | Cadastra usuário (`nome`, `email`, `cpf`, `senha`, `confirmacaoSenha`) | 201, 400, 409 |
 
 ### Padrão de erro
 
@@ -81,6 +89,8 @@ Toda resposta de erro tem o mesmo formato:
 
 - **Banco:** PostgreSQL. O modelo está em [`backend/database/schema.sql`](backend/database/schema.sql).
 - **Unicidade garantida pelo banco:** `email` e `cpf` têm `UNIQUE`. Além disso, `CHECK`s obrigam o e-mail a estar em minúsculas e o CPF a ter só dígitos, para ninguém furar a unicidade gravando sem normalizar.
+- **Cadastro em transação:** o usuário, as categorias padrão e as fontes/destinos padrão (Conta corrente e Salário) são gravados juntos. Se algo falhar, nada fica gravado.
+- **Utilitários puros** (`cpfValido`, validações de e-mail e senha) ficam em `backend/src/models/validacao.js`, junto com o teste deles.
 - **Soft-delete:** categorias, fontes/destinos e lançamentos não são apagados de verdade. A exclusão preenche `excluido_em`, e a API só lê e altera pelas views `categorias_ativas`, `fontes_destinos_ativas` e `lancamentos_ativos`. Assim nenhuma consulta precisa lembrar de filtrar os excluídos.
 - **Nomes únicos entre os ativos:** por causa do soft-delete, o `UNIQUE` de nome de categoria e de fonte/destino é um índice único parcial (`WHERE excluido_em IS NULL`). A regra continua garantida pelo banco, mas excluir "Lazer" permite criar outra "Lazer". O nome também não diferencia maiúsculas (`LOWER(nome)`).
 
