@@ -39,6 +39,23 @@ export function mascaraCpf(valor) {
     .replace(/(\d{3})(\d{1,2})$/, '$1-$2')
 }
 
+const doisDigitos = (n) => String(n).padStart(2, '0')
+
+// Data de hoje no fuso do navegador, como 'AAAA-MM-DD'.
+export function hojeISO() {
+  const hoje = new Date()
+  return `${hoje.getFullYear()}-${doisDigitos(hoje.getMonth() + 1)}-${doisDigitos(hoje.getDate())}`
+}
+
+// Primeiro e último dia do mês atual: o período padrão das telas.
+export function mesAtual() {
+  const hoje = new Date()
+  const ano = hoje.getFullYear()
+  const mes = hoje.getMonth() + 1
+  const ultimoDia = new Date(ano, mes, 0).getDate()
+  return { inicio: `${ano}-${doisDigitos(mes)}-01`, fim: `${ano}-${doisDigitos(mes)}-${ultimoDia}` }
+}
+
 // '2026-11-01' → '01/11/2026'. Quebra a string em vez de usar new Date(),
 // que interpreta a data em UTC e pode mostrar o dia anterior no Brasil.
 export function dataBR(iso) {
