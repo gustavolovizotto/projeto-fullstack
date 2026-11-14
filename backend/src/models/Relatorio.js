@@ -21,3 +21,22 @@ export async function porCategoria(usuarioId, periodo, anterior) {
   );
   return rows;
 }
+
+// Entradas, saídas e saldo de cada fonte/destino ativa no período. O LEFT
+// JOIN faz contas sem movimento aparecerem com zero.
+export async function porFonteDestino(usuarioId, periodo) {
+  const { rows } = await pool.query(
+    `SELECT f.id, f.nome, f.tipo,
+       COALESCE(SUM(l.valor) FILTER (WHERE l.tipo = 'entrada'), 0) AS entradas,
+       COALESCE(SUM(l.valor) FILTER (WHERE l.tipo = 'saida'), 0) AS saidas,
+       COALESCE(SUM(CASE WHEN l.tipo = 'entrada' THEN l.valor ELSE -l.valor END), 0) AS saldo
+     FROM fontes_destinos_ativas f
+     LEFT JOIN lancamentos_ativos l
+       ON l.fonte_destino_id = f.id AND l.data BETWEEN $2 AND $3
+     WHERE f.usuario_id = $1
+     GROUP BY f.id, f.nome, f.tipo
+     ORDER BY f.nome`,
+    [usuarioId, periodo.inicio, periodo.fim],
+  );
+  return rows;
+}
