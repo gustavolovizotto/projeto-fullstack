@@ -1,7 +1,14 @@
 // Rode com: npm test
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { cpfValido, emailValido, senhaValida, senhaCabeNoBcrypt } from './validacao.js';
+import {
+  cpfValido,
+  emailValido,
+  numero,
+  senhaCabeNoBcrypt,
+  senhaValida,
+  valorMonetarioValido,
+} from './validacao.js';
 
 test('cpfValido confere os dígitos verificadores', () => {
   assert.equal(cpfValido('529.982.247-25'), true);
@@ -27,4 +34,23 @@ test('senhaValida exige 8+ caracteres com letra e número', () => {
 test('senhaCabeNoBcrypt limita a 72 bytes', () => {
   assert.equal(senhaCabeNoBcrypt('a1'.repeat(36)), true);
   assert.equal(senhaCabeNoBcrypt('a1'.repeat(36) + 'x'), false);
+});
+
+test('numero aceita número ou texto numérico', () => {
+  assert.equal(numero(10), 10);
+  assert.equal(numero('10.5'), 10.5);
+  assert.ok(Number.isNaN(numero('')));
+  assert.ok(Number.isNaN(numero(null)));
+  assert.ok(Number.isNaN(numero('abc')));
+});
+
+test('valorMonetarioValido exige positivo com até 2 casas', () => {
+  assert.equal(valorMonetarioValido(0.01), true);
+  assert.equal(valorMonetarioValido(1234.56), true);
+  assert.equal(valorMonetarioValido(0.1 + 0.2), true); // 0.30000000000000004
+  assert.equal(valorMonetarioValido(0), false);
+  assert.equal(valorMonetarioValido(-5), false);
+  assert.equal(valorMonetarioValido(10.123), false);
+  assert.equal(valorMonetarioValido(10000000000), false); // não cabe em NUMERIC(12,2)
+  assert.equal(valorMonetarioValido(NaN), false);
 });

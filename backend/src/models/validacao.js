@@ -34,6 +34,29 @@ export function senhaCabeNoBcrypt(senha) {
   return Buffer.byteLength(senha, 'utf8') <= 72;
 }
 
+// Lê um número do corpo da requisição: aceita 10 ou "10". Qualquer outra
+// coisa (vazio, null, "abc", objeto) vira NaN e é barrada pela validação.
+export function numero(valor) {
+  if (typeof valor === 'number') return valor;
+  if (typeof valor === 'string' && valor.trim() !== '') return Number(valor);
+  return NaN;
+}
+
+export function inteiroEntre(valor, minimo, maximo) {
+  return Number.isInteger(valor) && valor >= minimo && valor <= maximo;
+}
+
+// Dinheiro: maior que zero, no máximo 2 casas decimais e cabendo em
+// NUMERIC(12, 2), o tipo das colunas de valor no banco.
+export function valorMonetarioValido(valor) {
+  return (
+    Number.isFinite(valor) &&
+    valor > 0 &&
+    valor <= 9999999999.99 &&
+    Math.abs(valor * 100 - Math.round(valor * 100)) < 1e-6
+  );
+}
+
 // Lê um campo de texto do corpo da requisição. Qualquer coisa que não seja
 // string (número, objeto, ausente) vira '' e cai na validação de obrigatório.
 export function texto(valor) {
