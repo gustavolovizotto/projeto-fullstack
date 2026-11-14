@@ -13,6 +13,7 @@ Disciplina: Programação Web Full Stack (Engenharia de Software).
 | Configuração | `dotenv` |
 | Segurança | `cors`, `bcrypt` (hash + salt das senhas), `jsonwebtoken` (JWT), `express-rate-limit` (login) |
 | Testes das regras | `node --test` (nativo do Node) |
+| Front-end | React 19 + Vite, React Router, `fetch` nativo |
 
 ## Estrutura
 
@@ -28,6 +29,13 @@ projeto-fullstack/
 │       ├── middlewares/    → autenticação, validação, tratamento de erros
 │       └── config/         → variáveis de ambiente e pool do banco
 ├── frontend/
+│   ├── .env.example        → URL da API
+│   └── src/
+│       ├── main.jsx        → ponto de entrada (monta o React Router)
+│       ├── index.css       → estilos globais
+│       ├── components/     → componentes e páginas em JSX
+│       ├── contexts/       → AuthContext e demais contextos
+│       └── services/       → cliente HTTP (único acesso à API) e formatação
 └── README.md
 ```
 
@@ -59,6 +67,19 @@ npm run dev
 
 A API sobe em `http://localhost:3000`. Para conferir: `curl http://localhost:3000/api/health`.
 
+### Front-end
+Em outro terminal, com a API rodando:
+
+```bash
+cd frontend
+cp .env.example .env
+npm install
+npm run dev
+```
+
+A aplicação abre em `http://localhost:5173` (porta fixa, porque é a origem liberada no CORS da API).
+
+### Testes
 Testes das regras de negócio (CPF, senha e, mais adiante, parcelas e faturas):
 
 ```bash
@@ -94,6 +115,8 @@ Toda resposta de erro tem o mesmo formato:
 - **Banco:** PostgreSQL. O modelo está em [`backend/database/schema.sql`](backend/database/schema.sql).
 - **Unicidade garantida pelo banco:** `email` e `cpf` têm `UNIQUE`. Além disso, `CHECK`s obrigam o e-mail a estar em minúsculas e o CPF a ter só dígitos, para ninguém furar a unicidade gravando sem normalizar.
 - **Cadastro em transação:** o usuário, as categorias padrão e as fontes/destinos padrão (Conta corrente e Salário) são gravados juntos. Se algo falhar, nada fica gravado.
+- **Front sem pasta de utilitários:** o enunciado limita o `src/` do front a `components/`, `contexts/` e `services/`. Funções de formatação (moeda, datas) ficam em `frontend/src/services/formatos.js`.
+- **Cliente HTTP único:** `frontend/src/services/api.js` usa o `fetch` nativo, põe o `Authorization` em toda requisição e, se uma requisição autenticada voltar 401, faz logout.
 - **Login:** o token JWT vale `JWT_EXPIRES_IN` (padrão 1h). E-mail inexistente e senha errada recebem a mesma resposta e levam o mesmo tempo (o bcrypt compara com um hash falso), para não revelar quais e-mails estão cadastrados. Depois de 5 tentativas com falha em 15 minutos, o IP recebe 429.
 - **Utilitários puros** (`cpfValido`, validações de e-mail e senha) ficam em `backend/src/models/validacao.js`, junto com o teste deles.
 - **Soft-delete:** categorias, fontes/destinos e lançamentos não são apagados de verdade. A exclusão preenche `excluido_em`, e a API só lê e altera pelas views `categorias_ativas`, `fontes_destinos_ativas` e `lancamentos_ativos`. Assim nenhuma consulta precisa lembrar de filtrar os excluídos.
